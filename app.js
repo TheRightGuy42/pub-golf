@@ -1,24 +1,17 @@
-
-// 1. FIREBASE CONFIGURATION (Replace with your keys from Firebase Console)
+// 1. FIREBASE CONFIGURATION (No import statements!)
 const firebaseConfig = {
-
-    apiKey: "AIzaSyDFmxw5Impzi4yIS-gt9nG8I8EUQJGxf1Q",
-
-    authDomain: "pubgolf-4b56b.firebaseapp.com",
-
-    projectId: "pubgolf-4b56b",
-
-    storageBucket: "pubgolf-4b56b.firebasestorage.app",
-
-    messagingSenderId: "237612691825",
-
-    appId: "1:237612691825:web:dc2e749e77c5e9386486d0"
-
+    apiKey: "AIzaSy...",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
 };
 
-// Initialize Firebase
+// Initialize Firebase using the global objects
 firebase.initializeApp(firebaseConfig);
-const app = initializeApp(firebaseConfig);
+const db = firebase.database();
 
 // 2. STATE MANAGEMENT
 let gameState = {
