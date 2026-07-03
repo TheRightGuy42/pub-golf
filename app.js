@@ -125,7 +125,22 @@ function renderActiveTab() {
     if (!gameState.data) return;
 
     // GM defaults to 'setup', Adventurers default to 'card'
+    const tab = function renderActiveTab() {
+    const content = document.getElementById('tab-content');
+    if (!gameState.data) return;
+
+    // GM defaults to 'setup', Adventurers default to 'card'
     const tab = window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
+    
+    if (tab === 'setup' && gameState.role === 'GM') {
+        renderSetupTab(content);
+    } else if (tab === 'card') {
+        content.innerHTML = `<div class="parchment-card"><h2>Live Scorecard</h2>
+        <p>Scorecard UI coming next!</p></div>`;
+    } else {
+        content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
+    }
+}window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
     
     if (tab === 'setup' && gameState.role === 'GM') {
         renderSetupTab(content);
