@@ -16,10 +16,10 @@ const db = firebase.database();
 // 2. STATE MANAGEMENT
 let gameState = {
     code: localStorage.getItem('gameCode') || null,
-    role: localStorage.getItem('role') || null, // 'GM' or 'Player'
+    role: localStorage.getItem('role') || null,
     playerName: localStorage.getItem('playerName') || null,
     teamId: localStorage.getItem('teamId') || null,
-    data: null // Holds live Firebase data
+    data: null
 };
 
 // 3. FANTASY SCORING SYSTEM
@@ -38,6 +38,10 @@ function getScoringLabel(sips, par) {
     return "Doomed";
 }
 
+function sanitizeForFirebase(name) {
+    return name.replace(/[.#$\[\]]/g, '').trim();
+}
+
 // 4. LOBBY FUNCTIONS
 function generateGameCode() {
     return Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -49,7 +53,6 @@ async function createGame() {
 
     const code = generateGameCode();
     
-    // Setup default game structure in Firebase
     await db.ref(`games/${code}`).set({
         gmPasscode: passcode,
         created: firebase.database.ServerValue.TIMESTAMP,
@@ -75,7 +78,7 @@ async function joinGame() {
     const snapshot = await db.ref(`games/${code}`).once('value');
     if (!snapshot.exists()) return alert("Tavern not found!");
 
-    saveSession(code, 'Player', name, null); // Team selection happens inside
+    saveSession(code, 'Player', name, null);
     initGame();
 }
 
@@ -104,7 +107,6 @@ function initGame() {
         document.body.classList.add('is-gm');
     }
 
-    // Listen to Firebase Realtime Database
     db.ref(`games/${gameState.code}`).on('value', (snapshot) => {
         gameState.data = snapshot.val();
         renderActiveTab();
@@ -115,7 +117,6 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     
-    // Store active tab globally or pass it to render logic
     window.activeTab = tabName;
     renderActiveTab();
 }
@@ -124,57 +125,48 @@ function renderActiveTab() {
     const content = document.getElementById('tab-content');
     if (!gameState.data) return;
 
-    // GM defaults to 'setup', Adventurers default to 'card'
-    const tab = function renderActiveTab() {
-    const content = document.getElementById('tab-content');
-    if (!gameState.data) return;
-
-    // GM defaults to 'setup', Adventurers default to 'card'
     const tab = window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
     
     if (tab === 'setup' && gameState.role === 'GM') {
         renderSetupTab(content);
     } else if (tab === 'card') {
-        content.innerHTML = `<div class="parchment-card"><h2>Live Scorecard</h2>
-        <p>Scorecard UI coming next!</p></div>`;
-    } else {
-        content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
-    }
-}window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
-    
-    if (tab === 'setup' && gameState.role === 'GM') {
-        renderSetupTab(content);
-    } else if (tab === 'card') {
-        content.innerHTML = `<div class="parchment-card"><h2>Live Scorecard</h2>
-        <p>Scorecard UI coming next!</p></div>`;
+        renderCardTab(content);
     } else {
         content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
     }
 }
 
-// Auto-init if session exists
-if (gameState.code) {
-    initGame();
-}
-
+// --- SETUP TAB FUNCTIONS ---
 function renderSetupTab(content) {
-    // 1. Generate the list of existing Taverns
     let tavernsHtml = Object.keys(gameState.data.taverns || {}).map(key => {
         let t = gameState.data.taverns[key];
-        return `<li style="margin-bottom: 5px;"><b>${t.name}</b> — ${t.drink} (Par: ${t.par})</li>`;
+        return `<li style="margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 5px;">
+                    <span><b>${t.name}</b><br><small>${t.drink} (Par: ${t.par})</small></span>
+                    <span style="color: var(--crimson); cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0 10px;" onclick="deleteItem('taverns', '${key}')">X</span>
+                </li>`;
     }).join('');
 
-    // 2. Generate the list of existing Guilds
     let teamsHtml = Object.keys(gameState.data.teams || {}).map(key => {
         let tm = gameState.data.teams[key];
-        return `<li style="margin-bottom: 5px; color: var(--${tm.color})"><b>${tm.name}</b></li>`;
+        return `<li style="margin-bottom: 10px; color: var(--${tm.color.replace(' ', '')}); display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 5px;">
+                    <span><b>${tm.name}</b></span>
+                    <span style="color: var(--crimson); cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0 10px;" onclick="deleteItem('teams', '${key}')">X</span>
+                </li>`;
     }).join('');
 
-    // 3. Draw the GM Setup Interface
+    let rulesHtml = Object.keys(gameState.data.rules || {}).map(key => {
+        let r = gameState.data.rules[key];
+        let sign = r.points > 0 ? '+' : '';
+        return `<li style="margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 5px;">
+                    <span><b>${r.name}</b><br><small>Penalty: ${sign}${r.points} pts</small></span>
+                    <span style="color: var(--crimson); cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0 10px;" onclick="deleteItem('rules', '${key}')">X</span>
+                </li>`;
+    }).join('');
+
     content.innerHTML = `
         <div class="parchment-card">
-            <h2>Manage Taverns</h2>
-            <ul style="margin-bottom: 15px; padding-left: 20px;">${tavernsHtml || "<li>No taverns yet.</li>"}</ul>
+            <h2>Manage Taverns (The Route)</h2>
+            <ul style="margin-bottom: 15px; padding-left: 0; list-style: none;">${tavernsHtml || "<li>No taverns yet.</li>"}</ul>
             
             <input type="text" id="new-tavern-name" placeholder="Tavern Name (e.g. The Prancing Pony)">
             <input type="text" id="new-tavern-drink" placeholder="Drink (e.g. Pint of Ale)">
@@ -183,8 +175,8 @@ function renderSetupTab(content) {
         </div>
 
         <div class="parchment-card dark-wood">
-            <h2 style="color: var(--parchment)">Manage Guilds</h2>
-            <ul style="color: white; margin-bottom: 15px; padding-left: 20px;">${teamsHtml || "<li>No guilds yet.</li>"}</ul>
+            <h2 style="color: var(--parchment)">Manage Guilds (Teams)</h2>
+            <ul style="color: white; margin-bottom: 15px; padding-left: 0; list-style: none;">${teamsHtml || "<li>No guilds yet.</li>"}</ul>
             
             <input type="text" id="new-team-name" placeholder="Guild Name">
             <select id="new-team-color" style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.8); border-radius: 4px;">
@@ -196,6 +188,15 @@ function renderSetupTab(content) {
             </select>
             <button onclick="addGuild()">Add Guild</button>
         </div>
+
+        <div class="parchment-card">
+            <h2>House Rules (Penalties)</h2>
+            <ul style="margin-bottom: 15px; padding-left: 0; list-style: none;">${rulesHtml || "<li>No house rules yet.</li>"}</ul>
+            
+            <input type="text" id="new-rule-name" placeholder="Rule (e.g. Spilled Drink)">
+            <input type="number" id="new-rule-points" placeholder="Points Added (e.g. 2)">
+            <button onclick="addRule()" class="gold-btn">Add Rule</button>
+        </div>
     `;
 }
 
@@ -206,30 +207,9 @@ async function addTavern() {
     
     if(!name || !drink || !par) return alert("Please fill in all Tavern details.");
     
-    const tavernId = 't' + Date.now(); // generate unique ID
+    const tavernId = 't' + Date.now();
     await db.ref(`games/${gameState.code}/taverns/${tavernId}`).set({
-        name: name,
-        drink: drink,
-        par: par,
-        order: Date.now() // Allows us to sort them chronologically later
-    });
-}
-
-async function addGuild() {
-    const name = document.getElementById('new-team-name').value;
-    const color = documasync function addTavern() {
-    const name = document.getElementById('new-tavern-name').value;
-    const drink = document.getElementById('new-tavern-drink').value;
-    const par = parseInt(document.getElementById('new-tavern-par').value);
-    
-    if(!name || !drink || !par) return alert("Please fill in all Tavern details.");
-    
-    const tavernId = 't' + Date.now(); // generate unique ID
-    await db.ref(`games/${gameState.code}/taverns/${tavernId}`).set({
-        name: name,
-        drink: drink,
-        par: par,
-        order: Date.now() // Allows us to sort them chronologically later
+        name: name, drink: drink, par: par, order: Date.now()
     });
 }
 
@@ -239,35 +219,90 @@ async function addGuild() {
     
     if(!name) return alert("Your Guild needs a name!");
     
-    const teamId = 'g' + Date.now(); // generate unique ID
-    await db.ref(`games/${gameState.code}/teams/${teamId}`).set({
-        name: name,
-        color: color
+    const teamId = 'g' + Date.now();
+    await db.ref(`games/${gameState.code}/teams/${teamId}`).set({ name: name, color: color });
+}
+
+async function addRule() {
+    const name = document.getElementById('new-rule-name').value;
+    const points = parseInt(document.getElementById('new-rule-points').value);
+    
+    if(!name || isNaN(points)) return alert("Please provide a rule name and a point value.");
+    
+    const ruleId = 'r' + Date.now();
+    await db.ref(`games/${gameState.code}/rules/${ruleId}`).set({ name: name, points: points });
+}
+
+async function deleteItem(category, id) {
+    if(confirm(`Are you sure you want to delete this?`)) {
+        await db.ref(`games/${gameState.code}/${category}/${id}`).remove();
+    }
+}
+
+// --- LIVE SCORECARD FUNCTIONS ---
+function renderCardTab(content) {
+    const taverns = gameState.data.taverns || {};
+    const scores = gameState.data.scores || {};
+    
+    const myPlayerKey = sanitizeForFirebase(gameState.playerName);
+    const myScores = scores[myPlayerKey] || {};
+
+    if (Object.keys(taverns).length === 0) {
+        content.innerHTML = `<div class="parchment-card"><h2>The Route is Empty</h2><p>Wait for the Quest Master to forge the route in the Setup tab.</p></div>`;
+        return;
+    }
+
+    const sortedTaverns = Object.entries(taverns).sort((a, b) => a[1].order - b[1].order);
+    let html = `<h2 style="color: var(--gold); text-align: center; margin-bottom: 20px;">Your Quest Log</h2>`;
+
+    sortedTaverns.forEach(([tavernId, t]) => {
+        const currentSips = myScores[tavernId] || '';
+        const scoreLabel = currentSips ? getScoringLabel(currentSips, t.par) : 'Awaiting...';
+        const labelColor = currentSips && (currentSips > t.par) ? 'var(--crimson)' : 'var(--wood-dark)';
+        
+        html += `
+        <div class="parchment-card" style="margin-bottom: 15px;">
+            <h3 style="color: var(--wood-light); border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-bottom: 10px;">${t.name}</h3>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span><b>Drink:</b> ${t.drink}</span>
+                <span><b>Par:</b> ${t.par} sips</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 4px;">
+                <label style="flex-grow: 1;"><b>Your Sips:</b></label>
+                <input type="number" id="sips-${tavernId}" value="${currentSips}" min="1" style="width: 70px; margin-bottom: 0; padding: 8px;">
+                <button onclick="saveScore('${tavernId}', ${t.par})" class="gold-btn" style="width: auto; padding: 8px 15px;">Log</button>
+            </div>
+            
+            <div style="margin-top: 10px; text-align: right; font-style: italic;">
+                Rank: <b style="color: ${labelColor}">${scoreLabel}</b>
+            </div>
+        </div>`;
     });
-}ent.getElementById('new-team-color').value;
+
+    content.innerHTML = html;
+}
+
+async function saveScore(tavernId, par) {
+    const input = document.getElementById(`sips-${tavernId}`);
+    const sips = parseInt(input.value);
     
-    if(!name) return alert("Your Guild needs a name!");
+    if (isNaN(sips) || sips < 1) return alert("You must enter a valid number of sips!");
+
+    const myPlayerKey = sanitizeForFirebase(gameState.playerName);
     
-    const teamId = 'g' + Date.now(); // generate unique ID
-    await db.ref(`games/${gameState.code}/teams/${teamId}`).set({
-        name: name,
-        color: color
+    await db.ref(`games/${gameState.code}/scores/${myPlayerKey}/${tavernId}`).set(sips);
+    
+    const label = getScoringLabel(sips, par);
+    const logEntry = `${gameState.playerName} scored ${label} (${sips} sips) at a Tavern.`;
+    
+    await db.ref(`games/${gameState.code}/log`).push({
+        text: logEntry,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 }
 
-function renderActiveTab() {
-    const content = document.getElementById('tab-content');
-    if (!gameState.data) return;
-
-    // GM defaults to 'setup', Adventurers default to 'card'
-    const tab = window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
-    
-    if (tab === 'setup' && gameState.role === 'GM') {
-        renderSetupTab(content);
-    } else if (tab === 'card') {
-        content.innerHTML = `<div class="parchment-card"><h2>Live Scorecard</h2>
-        <p>Scorecard UI coming next!</p></div>`;
-    } else {
-        content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
-    }
+// Auto-init if session exists
+if (gameState.code) {
+    initGame();
 }
