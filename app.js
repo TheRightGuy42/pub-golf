@@ -202,7 +202,34 @@ async function addTavern() {
 
 async function addGuild() {
     const name = document.getElementById('new-team-name').value;
+    const color = documasync function addTavern() {
+    const name = document.getElementById('new-tavern-name').value;
+    const drink = document.getElementById('new-tavern-drink').value;
+    const par = parseInt(document.getElementById('new-tavern-par').value);
+    
+    if(!name || !drink || !par) return alert("Please fill in all Tavern details.");
+    
+    const tavernId = 't' + Date.now(); // generate unique ID
+    await db.ref(`games/${gameState.code}/taverns/${tavernId}`).set({
+        name: name,
+        drink: drink,
+        par: par,
+        order: Date.now() // Allows us to sort them chronologically later
+    });
+}
+
+async function addGuild() {
+    const name = document.getElementById('new-team-name').value;
     const color = document.getElementById('new-team-color').value;
+    
+    if(!name) return alert("Your Guild needs a name!");
+    
+    const teamId = 'g' + Date.now(); // generate unique ID
+    await db.ref(`games/${gameState.code}/teams/${teamId}`).set({
+        name: name,
+        color: color
+    });
+}ent.getElementById('new-team-color').value;
     
     if(!name) return alert("Your Guild needs a name!");
     
