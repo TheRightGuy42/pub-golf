@@ -16,7 +16,7 @@
 const firebaseConfig = {
   apiKey: "PASTE_YOUR_API_KEY_HERE",
   authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  databaseURL: "https://pubgolf-4b56b-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "PASTE_YOUR_PROJECT_ID",
   storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
   messagingSenderId: "PASTE_YOUR_SENDER_ID",
