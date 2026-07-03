@@ -129,3 +129,6 @@ header {
 
 .gm-only { display: none; }
 body.is-gm .gm-only { display: block; }
+
+/* NEW RULE: Hide player elements from the GM */
+body.is-gm .player-only { display: none !important; }
