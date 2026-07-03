@@ -406,3 +406,99 @@ async function awardQuest(questId) {
         alert(`Huzzah! Quest awarded to ${team.name}!`);
     }
 }
+
+// --- LEADERBOARD (BOARD TAB) FUNCTIONS ---
+function renderBoardTab(content) {
+    const teams = gameState.data.teams || {};
+    const scores = gameState.data.scores || {};
+    const quests = gameState.data.awardedQuests || {};
+    const players = gameState.data.players || {}; // We will use this soon!
+
+    if (Object.keys(teams).length === 0) {
+        content.innerHTML = `<div class="parchment-card"><h2>No Guilds Yet</h2><p>The Quest Master must forge Guilds in the Setup tab.</p></div>`;
+        return;
+    }
+
+    // 1. Calculate Quest Bonuses per Team
+    let teamBonuses = {};
+    Object.values(quests).forEach(q => {
+        teamBonuses[q.teamId] = (teamBonuses[q.teamId] || 0) + q.points;
+    });
+
+    // 2. Calculate Individual Scores & Combine into Team Scores
+    let playerTotals = [];
+    let teamTotals = {};
+
+    // Initialize team scores with their negative quest bonuses
+    Object.keys(teams).forEach(tId => {
+        teamTotals[tId] = -(teamBonuses[tId] || 0); 
+    });
+
+    // Sum up each player's sips
+    Object.keys(scores).forEach(playerKey => {
+        let totalSips = 0;
+        Object.values(scores[playerKey]).forEach(sips => totalSips += sips);
+        
+        playerTotals.push({ name: playerKey, score: totalSips });
+
+        // If this player belongs to a team, add their sips to the team's total
+        if (players[playerKey] && players[playerKey].teamId) {
+            const tId = players[playerKey].teamId;
+            if (teamTotals[tId] !== undefined) {
+                teamTotals[tId] += totalSips;
+            }
+        }
+    });
+
+    // 3. Sort Teams and Players (Lowest score wins!)
+    let sortedTeams = Object.keys(teams).map(tId => ({
+        id: tId,
+        name: teams[tId].name,
+        color: teams[tId].color,
+        score: teamTotals[tId],
+        bonus: teamBonuses[tId] || 0
+    })).sort((a, b) => a.score - b.score);
+
+    playerTotals.sort((a, b) => a.score - b.score);
+
+    // 4. Generate the HTML for the Guild Standings
+    let teamsHtml = sortedTeams.map((t, index) => {
+        let rank = index + 1;
+        let medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `${rank}.`));
+        return `
+        <div style="display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); align-items: center; background: rgba(255,255,255,0.3); margin-bottom: 5px; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3em; width: 30px; text-align: center;">${medal}</span>
+                <b style="color: var(--${t.color.replace(' ', '')}); font-size: 1.2em; text-shadow: 1px 1px 0px rgba(255,255,255,0.5);">${t.name}</b>
+            </div>
+            <div style="text-align: right;">
+                <b style="font-size: 1.3em; color: var(--wood-dark);">${t.score} sips</b><br>
+                <small style="color: var(--forestgreen); font-weight: bold;">-${t.bonus} quest bonus</small>
+            </div>
+        </div>`;
+    }).join('');
+
+    // 5. Generate the HTML for Individual Standings
+    let playersHtml = playerTotals.map((p, index) => {
+        return `
+        <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px dashed rgba(0,0,0,0.1);">
+            <span>${index + 1}. <b>${p.name}</b></span>
+            <span><b>${p.score}</b> sips</span>
+        </div>`;
+    }).join('');
+
+    // 6. Draw the Board Interface
+    content.innerHTML = `
+        <div class="parchment-card" style="padding: 10px;">
+            <h2 style="text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 2em; text-shadow: 2px 2px 2px #000;">Guild Standings</h2>
+            <div style="margin-bottom: 20px;">${teamsHtml}</div>
+        </div>
+
+        <div class="parchment-card dark-wood">
+            <h2 style="color: var(--parchment); text-align: center; margin-bottom: 15px;">Adventurer Standings</h2>
+            <div style="color: white; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                ${playersHtml || "<p style='text-align:center; font-style:italic;'>No sips logged yet.</p>"}
+            </div>
+        </div>
+    `;
+}
