@@ -124,16 +124,17 @@ function renderActiveTab() {
     const content = document.getElementById('tab-content');
     if (!gameState.data) return;
 
-    const tab = window.activeTab || 'card';
+    // GM defaults to 'setup', Adventurers default to 'card'
+    const tab = window.activeTab || (gameState.role === 'GM' ? 'setup' : 'card');
     
-    if (tab === 'card') {
-        content.innerHTML = `<div class="parchment-card"><h2>Taverns (Live Scorecard)</h2>
-        <p>Render loop for taverns goes here. Player logs sips, GM sees all.</p></div>`;
-    } else if (tab === 'board') {
-        content.innerHTML = `<div class="parchment-card"><h2>Guild Standings</h2>
-        <p>Render loop for Leaderboard goes here.</p></div>`;
+    if (tab === 'setup' && gameState.role === 'GM') {
+        renderSetupTab(content);
+    } else if (tab === 'card') {
+        content.innerHTML = `<div class="parchment-card"><h2>Live Scorecard</h2>
+        <p>Scorecard UI coming next!</p></div>`;
+    } else {
+        content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
     }
-    // ... Implement logic for Setup, Quests, and Log tabs
 }
 
 // Auto-init if session exists
