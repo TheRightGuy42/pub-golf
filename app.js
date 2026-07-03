@@ -132,7 +132,9 @@ function renderActiveTab() {
     } else if (tab === 'card') {
         renderCardTab(content);
     } else if (tab === 'quests') {
-        renderQuestsTab(content); // <--- Add this new condition
+        renderQuestsTab(content);
+    } else if (tab === 'board') {
+        renderBoardTab(content); // <--- Add this new condition
     } else {
         content.innerHTML = `<div class="parchment-card"><h2>${tab.toUpperCase()}</h2><p>Under construction...</p></div>`;
     }
