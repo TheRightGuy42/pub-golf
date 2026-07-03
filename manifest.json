@@ -1,0 +1,16 @@
+{
+    "name": "Tavern Crawl Pub Golf",
+    "short_name": "Tavern Crawl",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#2c1a0e",
+    "theme_color": "#d4af37",
+    "description": "A medieval fantasy pub golf scorecard and quest tracker.",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='1em' font-size='80'>🍺</text></svg>",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+}
