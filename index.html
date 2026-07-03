@@ -13,36 +13,32 @@
 </head>
 <body>
     <div id="app">
-        <!-- LOBBY SCREEN -->
+        <!-- 1. LOBBY SCREEN -->
         <div id="lobby-screen" class="screen active">
-            <h1>Tavern Crawl</h1>
-            <div class="parchment-card">
-                <h2>Join a Guild</h2>
-                <input type="text" id="join-code" placeholder="Game Code (e.g. A1B2)" uppercase>
-                <input type="text" id="player-name" placeholder="Your Name">
-                <button onclick="joinGame()">Enter Tavern</button>
-            </div>
-            
-            <div class="divider">~ OR ~</div>
-            
-            <div class="parchment-card dark-wood">
-                <h2 style="color: #f4e4bc;">Forge a New Quest</h2>
-                <p style="color: #ccc; font-size: 0.9em;">For Quest Masters only</p>
-                <input type="password" id="gm-passcode" placeholder="Set GM Passcode">
-                <button onclick="createGame()" class="gold-btn">Create Game</button>
+            <!-- ... Keep your existing lobby screen HTML exactly as it is ... -->
+        </div>
+
+        <!-- 2. NEW TEAM SELECTION SCREEN -->
+        <div id="team-screen" class="screen hidden">
+            <h1>Join a Guild</h1>
+            <div class="parchment-card" id="team-list">
+                <!-- Teams will be injected here by JavaScript -->
             </div>
         </div>
 
-        <!-- MAIN GAME SCREEN -->
-        <div id="game-screen" class="screen">
+        <!-- 3. MAIN GAME SCREEN -->
+        <div id="game-screen" class="screen hidden">
             <header class="dark-wood">
                 <div class="header-info">
                     <span id="display-role">Adventurer</span>
                     <span id="display-code">Code: <b>----</b></span>
                 </div>
                 <nav id="tabs">
-                    <button class="tab-btn gm-only" onclick="switchTab('setup')">Setup</button>
-                    <button class="tab-btn active" onclick="switchTab('card')">Card</button>
+                    <button class="tab-btn gm-only active" onclick="switchTab('setup')">Setup</button>
+                    
+                    <!-- Add the 'player-only' class to the Card tab -->
+                    <button class="tab-btn player-only" onclick="switchTab('card')">Card</button>
+                    
                     <button class="tab-btn gm-only" onclick="switchTab('quests')">Quests</button>
                     <button class="tab-btn" onclick="switchTab('board')">Board</button>
                     <button class="tab-btn" onclick="switchTab('log')">Log</button>
@@ -50,7 +46,7 @@
             </header>
 
             <main id="tab-content">
-                <!-- Content injected by JavaScript based on active tab -->
+                <!-- Content injected by JavaScript -->
             </main>
         </div>
     </div>
