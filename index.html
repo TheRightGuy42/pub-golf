@@ -1,25 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>pub golf: Quest Master</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Firebase SDK (Compat version for vanilla JS)  -->
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
-</head>
 <body>
     <div id="app">
         <!-- 1. LOBBY SCREEN -->
         <div id="lobby-screen" class="screen active">
-            <!-- ... Keep your existing lobby screen HTML exactly as it is ... -->
+            <h1>Tavern Crawl</h1>
+            <div class="parchment-card">
+                <h2>Join a Guild</h2>
+                <input type="text" id="join-code" placeholder="Game Code (e.g. A1B2)">
+                <input type="text" id="player-name" placeholder="Your Name">
+                <button onclick="joinGame()">Enter Tavern</button>
+            </div>
+            
+            <div class="divider">~ OR ~</div>
+            
+            <div class="parchment-card dark-wood">
+                <h2 style="color: #f4e4bc;">Forge a New Quest</h2>
+                <input type="password" id="gm-passcode" placeholder="Set GM Passcode">
+                <button onclick="createGame()" class="gold-btn">Create Game</button>
+            </div>
         </div>
 
-        <!-- 2. NEW TEAM SELECTION SCREEN -->
-        <div id="team-screen" class="screen hidden">
+        <!-- 2. TEAM SELECTION SCREEN -->
+        <div id="team-screen" class="screen">
             <h1>Join a Guild</h1>
             <div class="parchment-card" id="team-list">
                 <!-- Teams will be injected here by JavaScript -->
@@ -27,7 +28,7 @@
         </div>
 
         <!-- 3. MAIN GAME SCREEN -->
-        <div id="game-screen" class="screen hidden">
+        <div id="game-screen" class="screen">
             <header class="dark-wood">
                 <div class="header-info">
                     <span id="display-role">Adventurer</span>
@@ -35,10 +36,7 @@
                 </div>
                 <nav id="tabs">
                     <button class="tab-btn gm-only active" onclick="switchTab('setup')">Setup</button>
-                    
-                    <!-- Add the 'player-only' class to the Card tab -->
                     <button class="tab-btn player-only" onclick="switchTab('card')">Card</button>
-                    
                     <button class="tab-btn gm-only" onclick="switchTab('quests')">Quests</button>
                     <button class="tab-btn" onclick="switchTab('board')">Board</button>
                     <button class="tab-btn" onclick="switchTab('log')">Log</button>
@@ -53,5 +51,3 @@
 
     <script src="app.js"></script>
 </body>
-</html>
-
