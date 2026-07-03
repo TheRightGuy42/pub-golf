@@ -141,3 +141,74 @@ function renderActiveTab() {
 if (gameState.code) {
     initGame();
 }
+
+function renderSetupTab(content) {
+    // 1. Generate the list of existing Taverns
+    let tavernsHtml = Object.keys(gameState.data.taverns || {}).map(key => {
+        let t = gameState.data.taverns[key];
+        return `<li style="margin-bottom: 5px;"><b>${t.name}</b> — ${t.drink} (Par: ${t.par})</li>`;
+    }).join('');
+
+    // 2. Generate the list of existing Guilds
+    let teamsHtml = Object.keys(gameState.data.teams || {}).map(key => {
+        let tm = gameState.data.teams[key];
+        return `<li style="margin-bottom: 5px; color: var(--${tm.color})"><b>${tm.name}</b></li>`;
+    }).join('');
+
+    // 3. Draw the GM Setup Interface
+    content.innerHTML = `
+        <div class="parchment-card">
+            <h2>Manage Taverns</h2>
+            <ul style="margin-bottom: 15px; padding-left: 20px;">${tavernsHtml || "<li>No taverns yet.</li>"}</ul>
+            
+            <input type="text" id="new-tavern-name" placeholder="Tavern Name (e.g. The Prancing Pony)">
+            <input type="text" id="new-tavern-drink" placeholder="Drink (e.g. Pint of Ale)">
+            <input type="number" id="new-tavern-par" placeholder="Par (Sips)" min="1">
+            <button onclick="addTavern()" class="gold-btn">Add Tavern</button>
+        </div>
+
+        <div class="parchment-card dark-wood">
+            <h2 style="color: var(--parchment)">Manage Guilds</h2>
+            <ul style="color: white; margin-bottom: 15px; padding-left: 20px;">${teamsHtml || "<li>No guilds yet.</li>"}</ul>
+            
+            <input type="text" id="new-team-name" placeholder="Guild Name">
+            <select id="new-team-color" style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.8); border-radius: 4px;">
+                <option value="crimson">Crimson</option>
+                <option value="gold">Gold</option>
+                <option value="forest green">Forest Green</option>
+                <option value="steel blue">Steel Blue</option>
+                <option value="purple">Purple</option>
+            </select>
+            <button onclick="addGuild()">Add Guild</button>
+        </div>
+    `;
+}
+
+async function addTavern() {
+    const name = document.getElementById('new-tavern-name').value;
+    const drink = document.getElementById('new-tavern-drink').value;
+    const par = parseInt(document.getElementById('new-tavern-par').value);
+    
+    if(!name || !drink || !par) return alert("Please fill in all Tavern details.");
+    
+    const tavernId = 't' + Date.now(); // generate unique ID
+    await db.ref(`games/${gameState.code}/taverns/${tavernId}`).set({
+        name: name,
+        drink: drink,
+        par: par,
+        order: Date.now() // Allows us to sort them chronologically later
+    });
+}
+
+async function addGuild() {
+    const name = document.getElementById('new-team-name').value;
+    const color = document.getElementById('new-team-color').value;
+    
+    if(!name) return alert("Your Guild needs a name!");
+    
+    const teamId = 'g' + Date.now(); // generate unique ID
+    await db.ref(`games/${gameState.code}/teams/${teamId}`).set({
+        name: name,
+        color: color
+    });
+}
