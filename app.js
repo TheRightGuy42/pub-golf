@@ -544,3 +544,5 @@ function renderBoardTab(content) {
         </div>
     `;
 }
+
+
