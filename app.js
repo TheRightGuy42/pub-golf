@@ -308,3 +308,99 @@ async function saveScore(tavernId, par) {
 if (gameState.code) {
     initGame();
 }
+
+
+// --- QUESTS TAB FUNCTIONS ---
+function renderQuestsTab(content) {
+    // 1. Block Adventurers from seeing the secret quests
+    if (gameState.role !== 'GM') {
+        content.innerHTML = `
+        <div class="parchment-card" style="text-align: center;">
+            <h2 style="color: var(--crimson); margin-bottom: 15px;">Sealed Bounties</h2>
+            <p>The Quest Master keeps the side quests hidden.</p>
+            <p>Complete deeds of glory in the real world, and you may be rewarded!</p>
+        </div>`;
+        return;
+    }
+
+    const quests = gameState.data.quests || {};
+    const teams = gameState.data.teams || {};
+
+    // 2. Build the dropdown menu of active Guilds
+    let teamsOptions = `<option value="">-- Select a Guild --</option>` + 
+        Object.keys(teams).map(tId => `<option value="${tId}">${teams[tId].name}</option>`).join('');
+
+    // 3. Generate the list of Quests with their "Award" buttons
+    let questsHtml = Object.keys(quests).map(key => {
+        let q = quests[key];
+        return `
+        <div style="border: 1px solid var(--wood-light); padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.4); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <b style="font-size: 1.1em; color: var(--wood-dark);">${q.name}</b>
+                <span style="color: var(--crimson); cursor: pointer; font-weight: bold;" onclick="deleteItem('quests', '${key}')">X</span>
+            </div>
+            <div style="font-size: 0.9em; margin-bottom: 15px; font-style: italic;">Bonus: -${q.points} sips</div>
+            
+            <div style="display: flex; gap: 10px;">
+                <select id="award-team-${key}" style="flex-grow: 1; padding: 8px;">
+                    ${teamsOptions}
+                </select>
+                <button onclick="awardQuest('${key}')" class="gold-btn" style="padding: 8px 15px; width: auto;">Award</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // 4. Draw the GM Quest Interface
+    content.innerHTML = `
+        <div class="parchment-card">
+            <h2>Secret Quests</h2>
+            <p style="font-size: 0.9em; margin-bottom: 15px;">Awarding a quest will permanently deduct sips from a Guild's total score.</p>
+            <div>${questsHtml || "<p>No quests forged yet.</p>"}</div>
+        </div>
+
+        <div class="parchment-card dark-wood">
+            <h2 style="color: var(--parchment)">Forge New Quest</h2>
+            <input type="text" id="new-quest-name" placeholder="Quest Name (e.g., Drink a pint upside down)">
+            <input type="number" id="new-quest-points" placeholder="Sips to Deduct (e.g., 3)" min="1">
+            <button onclick="addQuest()">Add Quest</button>
+        </div>
+    `;
+}
+
+async function addQuest() {
+    const name = document.getElementById('new-quest-name').value;
+    const points = parseInt(document.getElementById('new-quest-points').value);
+    
+    if(!name || isNaN(points)) return alert("Please provide a quest name and point value.");
+    
+    const questId = 'q' + Date.now();
+    await db.ref(`games/${gameState.code}/quests/${questId}`).set({ name: name, points: points });
+}
+
+async function awardQuest(questId) {
+    const teamId = document.getElementById(`award-team-${questId}`).value;
+    if (!teamId) return alert("You must select a Guild to award this quest to!");
+
+    const quest = gameState.data.quests[questId];
+    const team = gameState.data.teams[teamId];
+
+    if(confirm(`Award "${quest.name}" (-${quest.points} sips) to ${team.name}?`)) {
+        
+        // 1. Save the awarded points for the Leaderboard math
+        await db.ref(`games/${gameState.code}/awardedQuests`).push({
+            questName: quest.name,
+            points: quest.points,
+            teamId: teamId,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // 2. Announce it in the public log
+        const logEntry = `🏆 Quest Completed! ${team.name} achieved "${quest.name}" and gained a -${quest.points} sip bonus!`;
+        await db.ref(`games/${gameState.code}/log`).push({
+            text: logEntry,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        alert(`Huzzah! Quest awarded to ${team.name}!`);
+    }
+}
