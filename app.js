@@ -2,7 +2,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSy...",
     authDomain: "your-project.firebaseapp.com",
-    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    databaseURL: "https://pubgolf-4b56b-default-rtdb.europe-west1.firebasedatabase.app/",
     projectId: "your-project",
     storageBucket: "your-project.appspot.com",
     messagingSenderId: "123456789",
