@@ -78,7 +78,40 @@ async function joinGame() {
     const snapshot = await db.ref(`games/${code}`).once('value');
     if (!snapshot.exists()) return alert("Tavern not found!");
 
-    saveSession(code, 'Player', name, null);
+    const gameData = snapshot.val();
+    const teams = gameData.teams || {};
+    
+    // Stop players from joining if the GM hasn't created teams yet
+    if (Object.keys(teams).length === 0) {
+        return alert("The Quest Master hasn't forged any Guilds yet! Wait a moment and try again.");
+    }
+
+    // Hide lobby, show team selection screen
+    document.getElementById('lobby-screen').classList.remove('active');
+    document.getElementById('team-screen').classList.add('active');
+    
+    // Generate a button for each available Guild
+    const teamList = document.getElementById('team-list');
+    teamList.innerHTML = Object.keys(teams).map(tId => `
+        <button onclick="confirmTeam('${code}', '${name}', '${tId}')" 
+                style="background-color: var(--${teams[tId].color.replace(' ', '')}); color: white; margin-bottom: 10px; border-color: white; text-shadow: 1px 1px 2px black;">
+            Join ${teams[tId].name}
+        </button>
+    `).join('');
+}
+
+async function confirmTeam(code, name, teamId) {
+    const playerKey = sanitizeForFirebase(name);
+    
+    // Save the player's team to the database so the Leaderboard can do the math
+    await db.ref(`games/${code}/players/${playerKey}`).set({
+        teamId: teamId,
+        joinedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Save session and enter the game
+    saveSession(code, 'Player', name, teamId);
+    document.getElementById('team-screen').classList.remove('active');
     initGame();
 }
 
@@ -98,15 +131,24 @@ function saveSession(code, role, name, teamId) {
 function initGame() {
     if (!gameState.code) return;
 
-    document.getElementById('lobby-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('display-code').innerHTML = `Code: <b>${gameState.code}</b>`;
-    document.getElementById('display-role').innerText = gameState.playerName;
+    // ... (Keep existing code that hides lobby and sets display names) ...
 
     if (gameState.role === 'GM') {
         document.body.classList.add('is-gm');
+        window.activeTab = 'setup'; // GM defaults to Setup
+    } else {
+        window.activeTab = 'card';  // Players default to Card
     }
 
+    // Update the visual state of the navigation buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (gameState.role === 'GM') {
+        document.querySelector('.tab-btn[onclick="switchTab(\'setup\')"]').classList.add('active');
+    } else {
+        document.querySelector('.tab-btn[onclick="switchTab(\'card\')"]').classList.add('active');
+    }
+
+    // Listen to Firebase Realtime Database
     db.ref(`games/${gameState.code}`).on('value', (snapshot) => {
         gameState.data = snapshot.val();
         renderActiveTab();
