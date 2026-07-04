@@ -14,11 +14,11 @@
 // ------------------------------------------------------------------
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDFmxw5Impzi4yIS-gt9nG8I8EUQJGxf1Q",
-  authDomain: "pubgolf-4b56b.firebaseapp.com",
-  databaseURL: "https://pubgolf-4b56b-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "pubgolf-4b56b",
-  storageBucket: "pubgolf-4b56b.firebasestorage.app",
-  messagingSenderId: "237612691825",
-  appId: "1:237612691825:web:dc2e749e77c5e9386486d0"
+  apiKey: "PASTE_YOUR_API_KEY_HERE",
+  authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "PASTE_YOUR_SENDER_ID",
+  appId: "PASTE_YOUR_APP_ID"
 };

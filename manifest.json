@@ -1,7 +1,7 @@
 {
-  "name": "The Tavern Open — Pub Golf Quest Log",
-  "short_name": "Tavern Open",
-  "description": "A shared quest log for your pub golf crawl.",
+  "name": "The Ogre's Open — Pub Golf Swamp Log",
+  "short_name": "Ogre's Open",
+  "description": "A shared swamp log for your pub golf crawl.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
